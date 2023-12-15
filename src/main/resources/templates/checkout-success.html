@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+<!--    bootstrap css-->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+    <title>payment-success</title>
+
+</head>
+<body>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script  src="https://sdk.cashfree.com/js/ui/2.0.0/cashfree.sandbox.js"></script>
+
+
+<div class = "container mt-5">
+<div class="card d-flex justify-content-center">
+    <div class="card-header">
+        Payment Details
+    </div>
+    <div class="card-body">
+        <h5 class="card-title"  th:text="${'cf_order_id:' + response.getCfOrderId()}"></h5>
+        <p class="card-text">payment_session_id: <span id="payment_session_id" th:text="${response.paymentSessionId}"></span></p>
+        <p th:text="${'order_status:' + response.orderStatus}"></p>
+        <button class="btn btn-primary" id="pay-btn">Proceed to Payment</button>
+
+        <p>Your Payment Option will be available below after click "Proceed to Payment" </p>
+    </div>
+</div>
+</div>
+<div id="paymentForm"></div>
+
+<script>
+    const paymentSessionId = document.getElementById("payment_session_id").innerText;
+    console.log(paymentSessionId);
+    const cashfree = new Cashfree(paymentSessionId);
+    const success = function(data) {
+    if (data.order && data.order.status == "PAID") {
+            alert("Payment Success!! Call API to verify");
+            console.log(data.order.orderId);
+            var verifyData = '{"orderId":"' + data.order.orderId + '"}'
+        $.ajax({
+            type: "POST",
+            contentType: "application/json",
+            url: "/verify",
+            data: verifyData,
+            dataType: 'json',
+            cache: false,
+            success: function(result) {
+                if (result.orderStatus == "PAID") {
+                    alert("Payment Verified Order PAID");
+                    document.getElementById("paymentForm").style.display = "none";
+                }
+            },
+            failure: function(error) {
+                alert("Verification Failed");
+            }
+        });
+    } else {
+        //order is still active
+        alert("Order is ACTIVE")
+    }
+}
+let failure = function(data) {
+    alert(data.order.errorText)
+}
+    document.getElementById("pay-btn").addEventListener("click", () => {
+
+        const dropConfig = {
+                "components": [
+                    "order-details",
+                    "card",
+                    "netbanking",
+                    "app",
+                    "upi"
+                ],
+                "onSuccess": success,
+                "onFailure": failure,
+                "style": {
+                    "backgroundColor": "#ffffff",
+                    "color": "#11385b",
+                    "fontFamily": "Lato",
+                    "fontSize": "14px",
+                    "errorColor": "#ff0000",
+                    "theme": "bubble gum"
+                }
+        }
+        cashfree.drop(document.getElementById("paymentForm"),dropConfig);
+    });
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!--<h2>Payment Result</h2>-->
+<!--<div>-->
+<!--    <p th:text="${'cf_order_id:' + response.getCfOrderId()}"></p>-->
+<!--    <p>payment_session_id:<span id="payment_session_id" th:text="${response.paymentSessionId}"></span></p>-->
+<!--    <p th:text="${'order_status:' + response.orderStatus}"></p>-->
+<!--    <input type="button" value="Go to Payment Gateway" onclick="javascript:getSessionAndPay();">-->
+<!--</div>-->
+
+<!--<div id="paymentForm"></div>-->
+
+
+<!--<script>-->
+<!--const success = function(data) {-->
+<!--    if (data.order && data.order.status == "PAID") {-->
+<!--    alert("Order PAID !! call API to verify");-->
+<!--&lt;!&ndash;        $.ajax({&ndash;&gt;-->
+<!--&lt;!&ndash;            url: "checkstatus.php?order_id=" + data.order.orderId,&ndash;&gt;-->
+<!--&lt;!&ndash;            success: function(result) {&ndash;&gt;-->
+<!--&lt;!&ndash;                if (result.order_status == "PAID") {&ndash;&gt;-->
+<!--&lt;!&ndash;                    alert("Order PAID");&ndash;&gt;-->
+<!--&lt;!&ndash;                }&ndash;&gt;-->
+<!--&lt;!&ndash;            },&ndash;&gt;-->
+<!--&lt;!&ndash;        });&ndash;&gt;-->
+<!--    } else {-->
+<!--        //order is still active-->
+<!--        alert("Order is ACTIVE")-->
+<!--    }-->
+<!--}-->
+<!--let failure = function(data) {-->
+<!--    alert(data.order.errorText)-->
+<!--}-->
+
+<!--    const dropConfig = {-->
+<!--        "components": [-->
+<!--            "order-details",-->
+<!--            "card",-->
+<!--            "netbanking",-->
+<!--            "app",-->
+<!--            "upi"-->
+<!--        ],-->
+<!--        "onSuccess": success,-->
+<!--        "onFailure": failure,-->
+<!--        "style": {-->
+<!--            "backgroundColor": "#ffffff",-->
+<!--            "color": "#11385b",-->
+<!--            "fontFamily": "Lato",-->
+<!--            "fontSize": "14px",-->
+<!--            "errorColor": "#ff0000",-->
+<!--            "theme": "light", //(or dark)-->
+<!--        }-->
+<!--    }-->
+
+<!--  const getSessionAndPay = function(){-->
+<!--    let paymentSessionId = document.getElementById("payment_session_id").textContent;-->
+<!--    if (paymentSessionId == "") {-->
+<!--        alert("No session_id specified");-->
+<!--        return-->
+<!--      };-->
+<!--    const cf = new Cashfree(paymentSessionId);-->
+<!--    cf.redirect();-->
+<!--    const cashfree = new Cashfree(paymentSessionId);-->
+<!--    cashfree.drop(document.getElementById("paymentForm"), dropConfig);-->
+<!--}-->
+<!--</script>-->
+
+
+</body>
+</html>
